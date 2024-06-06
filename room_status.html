@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniJoin</title>
+  <style>
+    .room-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .room {
+      width: 150px;
+      height: 150px;
+      border: 2px solid black;
+      margin: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .room-status {
+      display: flex;
+      margin-top: 10px;
+    }
+
+    .room-status .room-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin: 5px;
+    }
+
+    .occupied {
+      background-color: red;
+    }
+
+    .empty {
+      background-color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>UniJoin</h1>
+  <div class="room-container">
+    <div class="room">
+      <span>1</span>
+      <div class="room-status">
+        <div class="room-circle occupied"></div>
+        <div class="room-circle empty"></div>
+      </div>
+    </div>
+    <div class="room">
+      <span>2</span>
+      <div class="room-status">
+        <div class="room-circle empty"></div>
+        <div class="room-circle occupied"></div>
+      </div>
+    </div>
+    <div class="room">
+      <span>3</span>
+      <div class="room-status">
+        <div class="room-circle occupied"></div>
+        <div class="room-circle empty"></div>
+      </div>
+    </div>
+    <div class="room">
+      <span>4</span>
+      <div class="room-status">
+        <div class="room-circle empty"></div>
+        <div class="room-circle occupied"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // MQTTブローカーに接続
+    const client = new Paho.MQTT.Client('broker.hivemq.com');
+
+    // トピックに接続
+    client.connect({
+      onSuccess: onConnect,
+      onFailure: onFail
+    });
+
+    function onConnect() {
+      console.log('MQTTブローカーに接続しました');
+
+      // トピックにサブスクライブ (修正)
+      client.subscribe('room/status1', onMessage1);
+      client.subscribe('room/status2', onMessage2);
+      client.subscribe('room/status3', onMessage3);
+      client.subscribe('room/status4', onMessage4);
+    }
+
+    function onFail(error) {
+      console.error('MQTTブローカーへの接続に失敗しました:', error);
+    }
+
+    function onMessage1(topic, payload) {
+      const status = payload.toString();
+
+      const roomElement = document.querySelector('.room-container .room:nth-child(1)');
+
+      if (status === 'Occupied') {
+        roomElement.querySelector('.room-circle:first-child').classList.add('occupied');
+        roomElement.querySelector('.room-circle:last-child').classList.remove('empty');
+      } else if (status === 'Vacant') {
+        roomElement.querySelector('.room-circle:first-child').classList.remove('occupied');
+        roomElement.querySelector('.room-circle:last-child').classList.add('empty');
+      }
+    }
+
+    function onMessage2(topic, payload) {
+      const status = payload.toString();
+
+      const roomElement = document.querySelector('.room-container .room:nth-child(4)');
+
+      if (status === 'Occupied') {
+        roomElement.classList.add('occupied');
+        roomElement.classList.remove('empty');
+      } else if (status === 'Vacant') {
+        roomElement.classList.add('empty');
+        roomElement.classList.remove('occupied');
+      }
+    }
+  </script>
+</body>
+</html>
